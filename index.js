@@ -2,50 +2,76 @@ const { json } = require('express')
 const express = require('express')
 const app = express()
 const port = 3000
+const bodyParser=require('body-parser')
 const pool=require('./dbConnect')
+app.use(bodyParser.json())
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+)
 
 app.get('/', async(req, res) => {
     let response= await pool.query('SELECT * FROM todolist')
     console.log(response)
     res.json({info:'Node db connection Successful'})
 })
-app.get('/update', async(req, res) => {
-  let updateuser=`UPDATE todolist
-                   SET task = 'Updated Successfully by code'
-                   WHERE id = 1`;
-  try {
-    await pool.connect();   //gets connection
-    await pool.query(updateuser);  //update user.
-    return true
-    let query=
-    console.log()
-    
-  } catch (error) {
-    console.log(error.stack)
-    return false
-  }
-  finally{
-    res.json({info:'updation successful. Check Console'})
-    let query= await pool.query('SELECT * FROM todolist')
-    console.log(query);
-  }
+app.get('/getFilter',async(req,res)=>{
+  let response=await pool.query(`SELECT * FROM todolist where done=$1`,[req.body.done])
+  console.log(response)
+  res.json({"info":"Get all tasks by filter"})
 })
-app.get('/delete',async(req,res)=>{
-const query=`DELETE FROM todolist where id = 1`;
-try {
-  await pool.connect(); //connect to db
-  await pool.query(query); //delete and update to table
-  return true
-  
-} catch (error) {
-  console.log(error.stack)
-  return false
-}
-finally{
+//get tasks total sum true and false
+app.get('/getSum',async(req,res)=>{
+  let gettotal=await pool.query(`SELECT count(id) FROM todolist`)
+  let gettrue=await pool.query(`SELECT count(done) FROM todolist where done=true`)
+  let getfalse=await pool.query(`SELECT count(done) FROM todolist where done=false`)
+  // console.log(res.json({
+  //   'Total':gettotal,
+  //   "done":gettrue,
+  //   "False":getfalse})
+  //   )
+  res.send([{
+    'Total':gettotal.rows,
+    "done":gettrue.rows,
+    "False":getfalse.rows
+  }])
+})
+//get task
+app.get('/getTask',async(req,res)=>{
+  let response=await pool.query(`SELECT * FROM todolist where id=$1`,[req.body.id])
+  console.log(response)
+  res.json({"info":"Got one task"})
+})
+//get tasks done by filter true
+app.post('/create',async(req,res)=>{
+  let query=await pool.query(`INSERT INTO todolist (task,done) VALUES($1,$2)`,[req.body.task,req.body.done])
+  res.json({"info":"Created Sucessfully"})
+})
+
+
+app.put('/update', async(req, res) => {
+  let updateuser = await pool.query(`UPDATE todolist
+                   SET task = $2
+                   WHERE id = $1`,[req.body.id,req.body.task])
+ 
+    res.json({"info":'updation successful. Check Console'})
+    // let query= await pool.query('SELECT * FROM todolist')
+})
+app.put('/updateDone', async(req, res) => {
+  let updateuser = await pool.query(`UPDATE todolist
+                   SET done = $2
+                   WHERE id = $1`,[req.body.id,req.body.done])
+ 
+    res.json({"info":'updation successful. Check Console'})
+    // let query= await pool.query('SELECT * FROM todolist')
+})
+app.delete('/delete',async(req,res)=>{
+const query=await pool.query(`DELETE FROM todolist where id = $1`,[req.body.id]);
+
   res.json({info:'Deletion Successful'})
-  let query= await pool.query('SELECT * FROM todolist')
-  console.log(query);
-}
+  let query2= await pool.query('SELECT * FROM todolist')
+  console.log(query2);
 
 })
 
