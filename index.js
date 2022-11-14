@@ -23,19 +23,23 @@ app.get('/getFilter',async(req,res)=>{
 })
 //get tasks total sum true and false
 app.get('/getSum',async(req,res)=>{
-  let gettotal=await pool.query(`SELECT count(id) FROM todolist`)
-  let gettrue=await pool.query(`SELECT count(done) FROM todolist where done=true`)
-  let getfalse=await pool.query(`SELECT count(done) FROM todolist where done=false`)
+  let gettotal=await pool.query(`SELECT count(id) AS "Total Tasks" FROM todolist`)
+  let gettrue=await pool.query(`SELECT count(done) AS "tasks" FROM todolist group by done order by count(done) ASC`)
+  // let getfalse=await pool.query(`SELECT count(done) FROM todolist where done=false`)
   // console.log(res.json({
   //   'Total':gettotal,
   //   "done":gettrue,
   //   "False":getfalse})
   //   )
-  res.send([{
-    'Total':gettotal.rows,
-    "done":gettrue.rows,
-    "False":getfalse.rows
-  }])
+  // const subtotal=JSON.parse(gettotal)
+  // const subtrue=JSON.parse(gettrue)
+  // const subfalse=JSON.parse(getfalse)
+  res.json({
+    'Total':gettotal.rows[0],
+    "Done" : gettrue.rows[0],
+    "Undone" : gettrue.rows[1],
+    // "Undone":getfalse.rows[0]
+  })
 })
 //get task
 app.get('/getTask',async(req,res)=>{
