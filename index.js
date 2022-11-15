@@ -3,19 +3,21 @@ const express = require('express')
 const app = express()
 const port = 3000
 const bodyParser=require('body-parser')
-const pool=require('./dbConnect')
+//const pool=require('./dbConnect')
+
+const todoController=require('./Controller/todoController')
+const TODO_BASE_ROUTE='/todo'
+const toDoController=new todoController()
 app.use(bodyParser.json())
 app.use(
   bodyParser.urlencoded({
     extended: true,
   })
 )
-
-app.get('/', async(req, res) => {
-    let response= await pool.query('SELECT * FROM todolist')
-    console.log(response)
-    res.json({info:'Node db connection Successful'})
+app.get('/', (request, response) => {
+  response.json({ info: 'Node.js, Express, and Postgres API' })
 })
+app.get(TODO_BASE_ROUTE,toDoController.getAll)
 app.get('/getFilter',async(req,res)=>{
   let response=await pool.query(`SELECT * FROM todolist where done=$1`,[req.body.done])
   console.log(response)
@@ -48,20 +50,10 @@ app.get('/getTask',async(req,res)=>{
   res.json({"info":"Got one task"})
 })
 //get tasks done by filter true
-app.post('/create',async(req,res)=>{
-  let query=await pool.query(`INSERT INTO todolist (task,done) VALUES($1,$2)`,[req.body.task,req.body.done])
-  res.json({"info":"Created Sucessfully"})
-})
+app.post(TODO_BASE_ROUTE,toDoController.createTask);
 
 
-app.put('/update', async(req, res) => {
-  let updateuser = await pool.query(`UPDATE todolist
-                   SET task = $2
-                   WHERE id = $1`,[req.body.id,req.body.task])
- 
-    res.json({"info":'updation successful. Check Console'})
-    // let query= await pool.query('SELECT * FROM todolist')
-})
+app.put(TODO_BASE_ROUTE, toDoController.updatetask)
 app.put('/updateDone', async(req, res) => {
   let updateuser = await pool.query(`UPDATE todolist
                    SET done = $2
@@ -70,14 +62,7 @@ app.put('/updateDone', async(req, res) => {
     res.json({"info":'updation successful. Check Console'})
     // let query= await pool.query('SELECT * FROM todolist')
 })
-app.delete('/delete',async(req,res)=>{
-const query=await pool.query(`DELETE FROM todolist where id = $1`,[req.body.id]);
-
-  res.json({info:'Deletion Successful'})
-  let query2= await pool.query('SELECT * FROM todolist')
-  console.log(query2);
-
-})
+app.delete(TODO_BASE_ROUTE,toDoController.deleteOneTask)
 
 app.listen(port, () => {
    
