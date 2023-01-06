@@ -1,7 +1,7 @@
 const { json } = require('express')
 const express = require('express')
 const app = express()
-const port = 80
+const port = 90
 const bodyParser=require('body-parser')
 //const pool=require('./dbConnect')
 
